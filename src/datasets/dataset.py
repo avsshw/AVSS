@@ -22,6 +22,7 @@ class Dataset(BaseDataset):
             if path is None:
                 return None
             waveform, _ = torchaudio.load(path)
+            waveform = waveform.squeeze(0)
             return waveform
 
         def load_mouth(path):

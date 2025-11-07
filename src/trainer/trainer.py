@@ -47,10 +47,15 @@ class Trainer(BaseTrainer):
             import torch.cuda.amp
 
             with torch.cuda.amp.autocast():
-                outputs = self.model(**batch)
-                batch.update(outputs)
-                all_losses = self.criterion(**batch)
+                outputs = self.model(batch["mix"])
+                batch["output"] = outputs
+                all_losses = self.criterion(
+                    preds=outputs, targets=batch["source"], **batch
+                )
                 batch.update(all_losses)
+                batch["est_source"] = outputs
+                batch["true_source"] = batch["source"]
+                batch["mixture"] = batch["mix"]
                 loss = batch["loss"] / accumulation_steps
             scaler.scale(loss).backward()
             if (
@@ -58,26 +63,33 @@ class Trainer(BaseTrainer):
                 and batch_idx is not None
                 and (batch_idx + 1) % accumulation_steps == 0
             ):
+                grad_norm = self._get_grad_norm()
                 self._clip_grad_norm()
                 scaler.step(self.optimizer)
                 scaler.update()
                 self.optimizer.zero_grad()
                 if self.lr_scheduler is not None:
                     self.lr_scheduler.step()
+                batch["grad_norm"] = grad_norm
         else:
-            outputs = self.model(**batch)
-            batch.update(outputs)
-            all_losses = self.criterion(**batch)
+            outputs = self.model(batch["mix"])
+            batch["output"] = outputs
+            all_losses = self.criterion(preds=outputs, targets=batch["source"], **batch)
             batch.update(all_losses)
+            batch["est_source"] = outputs
+            batch["true_source"] = batch["source"]
+            batch["mixture"] = batch["mix"]
             loss = batch["loss"] / accumulation_steps
             if self.is_train:
                 loss.backward()
                 if batch_idx is not None and (batch_idx + 1) % accumulation_steps == 0:
+                    grad_norm = self._get_grad_norm()
                     self._clip_grad_norm()
                     self.optimizer.step()
                     self.optimizer.zero_grad()
                     if self.lr_scheduler is not None:
                         self.lr_scheduler.step()
+                    batch["grad_norm"] = grad_norm
 
         # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:
@@ -99,13 +111,17 @@ class Trainer(BaseTrainer):
             mode (str): train or inference. Defines which logging
                 rules to apply.
         """
-        # method to log data from you batch
-        # such as audio, text or images, for example
-
-        # logging scheme might be different for different partitions
-        if mode == "train":  # the method is called only every self.log_step steps
-            # Log Stuff
-            pass
-        else:
-            # Log Stuff
-            pass
+        sample_rate = 16000
+        self.writer.add_audio("mix", batch["mix"][0], sample_rate=sample_rate)
+        self.writer.add_audio(
+            "pred_source_1", batch["output"][0, 0], sample_rate=sample_rate
+        )
+        self.writer.add_audio(
+            "pred_source_2", batch["output"][0, 1], sample_rate=sample_rate
+        )
+        self.writer.add_audio(
+            "true_source_1", batch["source"][0, 0], sample_rate=sample_rate
+        )
+        self.writer.add_audio(
+            "true_source_2", batch["source"][0, 1], sample_rate=sample_rate
+        )

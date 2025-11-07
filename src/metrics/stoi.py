@@ -1,33 +1,30 @@
-import torch
-from torchmetrics.audio import ShortTimeObjectiveIntelligibility
+from torchmetrics.audio import PermutationInvariantTraining
+from torchmetrics.audio.stoi import ShortTimeObjectiveIntelligibility
 
 from src.metrics.base_metric import BaseMetric
 
 
 class STOIMetric(BaseMetric):
     """
-    STOI Metric
+    STOI Metric with PIT (Permutation Invariant Training)
     """
 
-    def __init__(self, name=None):
+    def __init__(self, device="cpu", name=None):
         super().__init__(name=name)
+        stoi_base = ShortTimeObjectiveIntelligibility(fs=16000)
+        self.metric = PermutationInvariantTraining(
+            stoi_base, mode="speaker-wise", eval_func="max"
+        )
 
-    def __call__(self, est_source, true_source, mixture):
+    def __call__(self, est_source, true_source, mixture, **kwargs):
         """
         Args:
-            est_source: Estimated source
-            true_source: True source
-            mixture: Mixture signal
+            est_source: Estimated source [batch, num_sources, samples]
+            true_source: True source [batch, num_sources, samples]
+            mixture: Mixture signal [batch, samples]
         Returns:
-            stoi: STOI score
+            stoi: STOI score averaged over batch and sources (with PIT)
         """
-        stoi_est = self.stoi(est_source, true_source)
-        return stoi_est.item()
-
-    @staticmethod
-    def stoi(source, target):
-        """
-        Compute STOI between source and target using torchmetrics.
-        """
-        stoi = ShortTimeObjectiveIntelligibility()
-        return stoi(source, target)
+        self.metric = self.metric.to(est_source.device)
+        score = self.metric(est_source, true_source)
+        return score.item()

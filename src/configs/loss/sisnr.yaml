@@ -1,0 +1,2 @@
+_target_: src.loss.sisnr.SISNRLoss
+num_sources: 2

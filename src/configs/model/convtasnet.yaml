@@ -1,0 +1,4 @@
+_target_: src.model.SimpleConvTasNet
+L: 20
+N: 128
+num_sources: 2

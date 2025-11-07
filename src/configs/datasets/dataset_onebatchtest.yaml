@@ -1,0 +1,12 @@
+train:
+  _target_: src.datasets.Dataset
+  part: "train"
+  data_dir: "dla_dataset/dla_dataset"
+  limit: 8
+  instance_transforms: null
+val:
+  _target_: src.datasets.Dataset
+  part: "train"
+  data_dir: "dla_dataset/dla_dataset"
+  limit: 8
+  instance_transforms: null

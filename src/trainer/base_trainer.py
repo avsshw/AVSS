@@ -209,6 +209,7 @@ class BaseTrainer:
                 batch = self.process_batch(
                     batch,
                     metrics=self.train_metrics,
+                    batch_idx=batch_idx,
                 )
             except torch.cuda.OutOfMemoryError as e:
                 if self.skip_oom:
@@ -218,7 +219,8 @@ class BaseTrainer:
                 else:
                     raise e
 
-            self.train_metrics.update("grad_norm", self._get_grad_norm())
+            if "grad_norm" in batch:
+                self.train_metrics.update("grad_norm", batch["grad_norm"])
 
             # log current results
             if batch_idx % self.log_step == 0:

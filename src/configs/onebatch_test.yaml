@@ -1,0 +1,32 @@
+defaults:
+  - model: convtasnet
+  - writer: cometml
+  - metrics: base
+  - datasets: dataset_onebatchtest
+  - dataloader: onebatch
+  - transforms: audio_separation
+  - _self_
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 3e-4
+  weight_decay: 0
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.ConstantLR
+  factor: 1.0
+loss_function:
+  _target_: src.loss.sisnr.SISNRLoss
+  num_sources: 2
+trainer:
+  log_step: 1
+  n_epochs: 200
+  epoch_len: 1
+  device_tensors: ["mix", "source"]
+  max_grad_norm: 10.0
+  resume_from: null
+  device: auto
+  override: True
+  monitor: "max val_SI-SNRi"
+  save_period: 20
+  early_stop: 200
+  save_dir: "saved_onebatch"
+  seed: 1
