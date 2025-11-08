@@ -1,0 +1,8 @@
+_target_: src.model.RTFSNet
+n_fft: 512
+hop_length: 128
+win_length: 512
+num_blocks: 2
+hidden_size: 64
+rnn_layers: 1
+num_sources: 2

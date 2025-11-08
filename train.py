@@ -40,6 +40,7 @@ def main(config):
     # build model architecture, then print to console
     model = instantiate(config.model).to(device)
     logger.info(model)
+    logger.info(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
 
     # get function handles of loss and metrics
     loss_function = instantiate(config.loss_function).to(device)
