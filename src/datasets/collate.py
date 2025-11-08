@@ -21,6 +21,9 @@ def collate_fn(dataset_items: list[dict], use_video=False, use_sources=True):
     mix = torch.stack([item["mix"] for item in dataset_items])
     batch = {"mix": mix}
 
+    if "mix_path" in dataset_items[0]:
+        batch["mix_path"] = [item["mix_path"] for item in dataset_items]
+
     if use_sources and dataset_items[0]["label_1"] is not None:
         sources = torch.zeros(
             (len(dataset_items), 2, dataset_items[0]["label_1"].shape[0]),

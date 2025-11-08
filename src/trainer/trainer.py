@@ -42,6 +42,10 @@ class Trainer(BaseTrainer):
             if batch_idx is not None and batch_idx % accumulation_steps == 0:
                 self.optimizer.zero_grad()
 
+        has_source = "source" in batch
+        if not has_source:
+            metric_funcs = []
+
         use_amp = scaler is not None
         if use_amp:
             import torch.cuda.amp
@@ -49,13 +53,15 @@ class Trainer(BaseTrainer):
             with torch.cuda.amp.autocast():
                 outputs = self.model(batch["mix"])
                 batch["output"] = outputs
-                all_losses = self.criterion(
-                    preds=outputs, targets=batch["source"], **batch
-                )
-                batch.update(all_losses)
+                if has_source:
+                    all_losses = self.criterion(
+                        preds=outputs, targets=batch["source"], **batch
+                    )
+                    batch.update(all_losses)
                 batch["est_source"] = outputs
-                batch["true_source"] = batch["source"]
                 batch["mixture"] = batch["mix"]
+                if has_source:
+                    batch["true_source"] = batch["source"]
                 loss = batch["loss"] / accumulation_steps
             scaler.scale(loss).backward()
             if (
@@ -74,11 +80,16 @@ class Trainer(BaseTrainer):
         else:
             outputs = self.model(batch["mix"])
             batch["output"] = outputs
-            all_losses = self.criterion(preds=outputs, targets=batch["source"], **batch)
-            batch.update(all_losses)
+            if has_source:
+                all_losses = self.criterion(
+                    preds=outputs, targets=batch["source"], **batch
+                )
+                batch.update(all_losses)
+
             batch["est_source"] = outputs
-            batch["true_source"] = batch["source"]
             batch["mixture"] = batch["mix"]
+            if has_source:
+                batch["true_source"] = batch["source"]
             loss = batch["loss"] / accumulation_steps
             if self.is_train:
                 loss.backward()
@@ -93,7 +104,8 @@ class Trainer(BaseTrainer):
 
         # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:
-            metrics.update(loss_name, batch[loss_name].item())
+            if loss_name in batch:
+                metrics.update(loss_name, batch[loss_name].item())
 
         for met in metric_funcs:
             metrics.update(met.name, met(**batch))
@@ -119,9 +131,10 @@ class Trainer(BaseTrainer):
         self.writer.add_audio(
             "pred_source_2", batch["output"][0, 1], sample_rate=sample_rate
         )
-        self.writer.add_audio(
-            "true_source_1", batch["source"][0, 0], sample_rate=sample_rate
-        )
-        self.writer.add_audio(
-            "true_source_2", batch["source"][0, 1], sample_rate=sample_rate
-        )
+        if "source" in batch:
+            self.writer.add_audio(
+                "true_source_1", batch["source"][0, 0], sample_rate=sample_rate
+            )
+            self.writer.add_audio(
+                "true_source_2", batch["source"][0, 1], sample_rate=sample_rate
+            )

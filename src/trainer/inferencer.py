@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import torch
+import torchaudio
 from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
@@ -123,42 +126,37 @@ class Inferencer(BaseTrainer):
 
         use_amp = scaler is not None
         if use_amp:
-            import torch.cuda.amp
-
             with torch.cuda.amp.autocast():
-                outputs = self.model(**batch)
-                batch.update(outputs)
+                outputs = self.model(batch["mix"])
+                batch["logits"] = outputs
         else:
-            outputs = self.model(**batch)
-            batch.update(outputs)
+            outputs = self.model(batch["mix"])
+            batch["logits"] = outputs
 
-        if metrics is not None:
+        batch["est_source"] = batch["logits"]
+        batch["mixture"] = batch["mix"]
+
+        if "source" in batch:
+            batch["true_source"] = batch["source"]
+
+        if metrics is not None and "true_source" in batch:
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
 
-        # Some saving logic. This is an example
-        # Use if you need to save predictions on disk
-
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
-
-        for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
-
-            if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+        if self.save_path is not None:
+            batch_size = batch["logits"].shape[0]
+            num_sources = batch["logits"].shape[1]
+            for i in range(batch_size):
+                if "mix_path" in batch:
+                    mix_path = Path(batch["mix_path"][i])
+                    mix_name = mix_path.stem  #
+                for src_idx in range(num_sources):
+                    separated_audio = batch["logits"][i, src_idx].cpu()
+                    output_filename = f"{mix_name}_s{src_idx + 1}.wav"
+                    output_path = self.save_path / part / output_filename
+                    torchaudio.save(
+                        output_path, separated_audio.unsqueeze(0), sample_rate=16000
+                    )
 
         return batch
 

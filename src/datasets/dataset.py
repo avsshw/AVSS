@@ -37,6 +37,7 @@ class Dataset(BaseDataset):
             "label_2": load_audio(item["label_2"]),
             "mouths_1": load_mouth(item["mouths_1"]),
             "mouths_2": load_mouth(item["mouths_2"]),
+            "mix_path": item["mix"],  # Add the mix file path
         }
 
         result = self.preprocess_data(result)
