@@ -8,11 +8,13 @@ defaults:
   - _self_
 optimizer:
   _target_: torch.optim.Adam
-  lr: 3e-4
+  lr: 1e-3
+  betas: [0.9, 0.98]
   weight_decay: 0
 lr_scheduler:
-  _target_: torch.optim.lr_scheduler.ConstantLR
-  factor: 1.0
+  _target_: torch.optim.lr_scheduler.LinearLR
+  start_factor: 0.2
+  total_iters: 5
 loss_function:
   _target_: src.loss.sisnr.SISNRLoss
   num_sources: 2
@@ -21,7 +23,7 @@ trainer:
   n_epochs: 200
   epoch_len: 1
   device_tensors: ["mix", "source"]
-  max_grad_norm: 10.0
+  max_grad_norm: 1.0
   resume_from: null
   device: auto
   override: True

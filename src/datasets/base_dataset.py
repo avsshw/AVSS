@@ -140,7 +140,7 @@ class BaseDataset(Dataset):
         """
         for entry in index:
             assert "mix" in entry, (
-                "Each dataset item should include field 'mix'" " - path to audio file."
+                "Each dataset item should include field 'mix' - path to audio file."
             )
             assert "label_1" in entry, (
                 "Each dataset item should include field 'label_1'"
