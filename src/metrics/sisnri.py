@@ -1,4 +1,3 @@
-import torch.nn.functional as F
 from torchmetrics.audio import PermutationInvariantTraining
 from torchmetrics.functional.audio import scale_invariant_signal_noise_ratio
 

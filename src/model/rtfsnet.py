@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from einops import rearrange
+
+from src.model.video_encoder import VideoEncoder
+from src.model.video_encoder_lrw import VideoEncoderLRW
 
 
 class STFT(nn.Module):
@@ -232,6 +236,11 @@ class RTFSNet(nn.Module):
         hidden_size=128,
         rnn_layers=2,
         num_sources=2,
+        use_video=False,
+        video_feature_dim=256,
+        video_flat_input_dim: int | None = None,
+        video_pretrained_path: str | None = None,
+        use_lrw_video_encoder: bool = False,
     ):
         """
         Args:
@@ -248,10 +257,34 @@ class RTFSNet(nn.Module):
         self.num_sources = num_sources
         self.n_fft = n_fft
         self.hop_length = hop_length
+        self.use_video = use_video
 
         self.encoder = STFT(n_fft, hop_length, win_length)
 
         self.decoder = ISTFT(n_fft, hop_length, win_length)
+
+        if use_video:
+            if use_lrw_video_encoder:
+                # LRW visual frontend (512-D per-frame features)
+                self.video_encoder = VideoEncoderLRW(
+                    pretrained_path=video_pretrained_path,
+                    freeze_backbone=True,
+                    in_channels=1,
+                )
+                if video_feature_dim != 512:
+                    video_feature_dim = 512
+            else:
+                self.video_encoder = VideoEncoder(
+                    feature_dim=video_feature_dim,
+                    flat_input_dim=video_flat_input_dim,
+                    pretrained_path=video_pretrained_path,
+                )
+            self.video_proj = nn.Linear(video_feature_dim, hidden_size)
+            self.fusion = nn.Sequential(
+                nn.Linear(hidden_size * 2, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, hidden_size),
+            )
 
         input_size = 2
 
@@ -291,7 +324,7 @@ class RTFSNet(nn.Module):
                         hidden_size = m.hidden_size
                         param.data[hidden_size : 2 * hidden_size].fill_(1.0)
 
-    def forward(self, mix):
+    def forward(self, mix, video=None):
         """
         Args:
             mix: (batch, time) mixed waveform
@@ -303,9 +336,34 @@ class RTFSNet(nn.Module):
         spec = self.encoder(mix)
         batch, freq, time, _ = spec.shape
 
+        video_features = None
+        if self.use_video and video is not None:
+            video_features = self.video_encoder(video)
+            video_features = self.video_proj(video_features)
+            t_v = video_features.shape[2]
+            if t_v != time:
+                video_features = rearrange(video_features, "b s t d -> (b s) d t")
+                video_features = F.interpolate(
+                    video_features, size=time, mode="linear", align_corners=False
+                )
+                video_features = rearrange(
+                    video_features, "(b s) d t -> b s t d", s=self.num_sources
+                )
+
         x = spec
-        for block in self.blocks:
+        for i, block in enumerate(self.blocks):
             x = block(x)
+
+            if (
+                self.use_video
+                and video_features is not None
+                and i == len(self.blocks) - 1
+            ):
+                video_avg = video_features.mean(dim=1)
+                video_avg = video_avg.unsqueeze(1).expand(-1, freq, -1, -1)
+
+                fused = torch.cat([x, video_avg], dim=-1)
+                x = self.fusion(fused) + x
 
         masks = self.mask_estimator(x)
         masks = rearrange(masks, "b f t (s c) -> b f t s c", s=self.num_sources, c=2)
