@@ -1,4 +1,3 @@
-import torch.nn.functional as F
 from torchmetrics.audio import PermutationInvariantTraining
 from torchmetrics.audio.pesq import PerceptualEvaluationSpeechQuality
 

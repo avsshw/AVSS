@@ -47,7 +47,11 @@ class Trainer(BaseTrainer):
             import torch.cuda.amp
 
             with torch.cuda.amp.autocast():
-                outputs = self.model(batch["mix"])
+                video = batch.get("video", None)
+                if video is not None:
+                    outputs = self.model(batch["mix"], video=video)
+                else:
+                    outputs = self.model(batch["mix"])
                 batch["output"] = outputs
                 all_losses = self.criterion(
                     preds=outputs, targets=batch["source"], **batch
@@ -72,7 +76,11 @@ class Trainer(BaseTrainer):
                     self.lr_scheduler.step()
                 batch["grad_norm"] = grad_norm
         else:
-            outputs = self.model(batch["mix"])
+            video = batch.get("video", None)
+            if video is not None:
+                outputs = self.model(batch["mix"], video=video)
+            else:
+                outputs = self.model(batch["mix"])
             batch["output"] = outputs
             all_losses = self.criterion(preds=outputs, targets=batch["source"], **batch)
             batch.update(all_losses)

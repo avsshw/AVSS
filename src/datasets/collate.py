@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 
 # This collate_fn is written with the hope that it will be used both for simple without-video architectures like ConvTasNet and
@@ -31,10 +30,11 @@ def collate_fn(dataset_items: list[dict], use_video=False, use_sources=True):
             sources[i, 1] = item["label_2"]
         batch["source"] = sources
 
-    if use_video and dataset_items[0].get("mouths_1") is not None:
+    has_video = dataset_items[0].get("mouths_1") is not None
+    if has_video:
         sample_video = dataset_items[0]["mouths_1"]
         videos = torch.zeros(
-            (len(dataset_items), *(2, *sample_video.shape)), dtype=sample_video.dtype
+            (len(dataset_items), 2, *sample_video.shape), dtype=sample_video.dtype
         )
         for i, item in enumerate(dataset_items):
             videos[i, 0] = item["mouths_1"]
@@ -42,6 +42,6 @@ def collate_fn(dataset_items: list[dict], use_video=False, use_sources=True):
         batch["video"] = videos
 
     if "name" in dataset_items[0]:
-        batch["name"] = [item["name"] for item in dataset_items]
+        batch["name"] = [item["name"] for item in dataset_items]  # type: ignore[assignment]
 
     return batch

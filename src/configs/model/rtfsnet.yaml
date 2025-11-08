@@ -6,3 +6,8 @@ num_blocks: 2
 hidden_size: 64
 rnn_layers: 1
 num_sources: 2
+use_video: true
+video_feature_dim: 512
+video_flat_input_dim: null
+video_pretrained_path: "lrw_resnet18_dctcn_video_boundary.pth"
+use_lrw_video_encoder: true
