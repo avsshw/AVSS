@@ -11,6 +11,7 @@ class SISNRiMetric(BaseMetric):
         self.pit_sisnr = PermutationInvariantTraining(
             scale_invariant_signal_noise_ratio, mode="speaker-wise", eval_func="max"
         )
+        self.device = device
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """
@@ -21,6 +22,8 @@ class SISNRiMetric(BaseMetric):
         Returns:
             SI-SNRi
         """
+        self.pit_sisnr = self.pit_sisnr.to(est_source.device)
+
         batch_size, num_sources, _ = true_source.shape
         est_sisnr = self.pit_sisnr(est_source, true_source)
         mixture_expanded = mixture.unsqueeze(1).expand(-1, num_sources, -1)

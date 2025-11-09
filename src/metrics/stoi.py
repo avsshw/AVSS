@@ -15,6 +15,7 @@ class STOIMetric(BaseMetric):
         self.metric = PermutationInvariantTraining(
             stoi_base, mode="speaker-wise", eval_func="max"
         )
+        self.device = device
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """
@@ -25,6 +26,8 @@ class STOIMetric(BaseMetric):
         Returns:
             stoi: STOI score averaged over batch and sources (with PIT)
         """
+
         self.metric = self.metric.to(est_source.device)
+
         score = self.metric(est_source, true_source)
         return score.item()

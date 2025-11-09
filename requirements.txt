@@ -9,6 +9,10 @@ pandas
 wandb
 comet_ml
 hydra-core
+pesq
+tqdm
+Pillow
+soundfile
 
 black
 isort

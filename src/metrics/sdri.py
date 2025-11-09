@@ -15,6 +15,7 @@ class SDRiMetric(BaseMetric):
         self.pit_sdri = PermutationInvariantTraining(
             signal_distortion_ratio, mode="speaker-wise", eval_func="max"
         )
+        self.device = device
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """
@@ -25,6 +26,9 @@ class SDRiMetric(BaseMetric):
         Returns:
             sdri: SDR improvement
         """
+
+        self.pit_sdri = self.pit_sdri.to(est_source.device)
+
         batch_size, num_sources, _ = true_source.shape
         est_sdri = self.pit_sdri(est_source, true_source)
         mixture_expanded = mixture.unsqueeze(1).expand(-1, num_sources, -1)

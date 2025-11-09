@@ -17,6 +17,7 @@ class PESQMetric(BaseMetric):
             mode="speaker-wise",
             eval_func="max",
         )
+        self.device = device
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """
@@ -27,5 +28,8 @@ class PESQMetric(BaseMetric):
         Returns:
             pesq: PESQ score (with PIT)
         """
+
+        self.pit_pesq = self.pit_pesq.to(est_source.device)
+
         est_pesq = self.pit_pesq(est_source, true_source)
         return est_pesq.mean().item()

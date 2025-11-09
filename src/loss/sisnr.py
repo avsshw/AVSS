@@ -32,6 +32,9 @@ class SISNRLoss(nn.Module):
             targets: True sources [batch, num_sources, samples]
             **batch
         """
+
+        self.pit = self.pit.to(preds.device)
+
         best_metric = self.pit(preds, targets)
         loss = -best_metric
         return {"loss": loss}
