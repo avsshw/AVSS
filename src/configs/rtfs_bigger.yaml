@@ -1,0 +1,109 @@
+defaults:
+  - model: rtfsnet
+  - writer: cometml
+  - metrics: base
+  - datasets: dataset
+  - dataloader: example
+  - transforms: audio_separation
+  - _self_
+
+model:
+  hidden_size: 64
+  hop_length: 128
+  n_fft: 512
+  num_blocks: 4
+  num_sources: 2
+  rnn_layers: 4
+  use_lrw_video_encoder: true
+  use_video: false
+  video_feature_dim: 512
+  video_flat_input_dim: null
+  video_pretrained_path: "lrw_resnet18_dctcn_video_boundary.pth"
+  win_length: 512
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 1.0e-4
+  weight_decay: 0.01
+
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  anneal_strategy: cos
+  div_factor: 25.0
+  epochs: ${trainer.n_epochs}
+  final_div_factor: 10000.0
+  max_lr: 5.0e-4
+  pct_start: 0.3
+  steps_per_epoch: ${trainer.epoch_len}
+
+loss_function:
+  _target_: src.loss.sisnr.SISNRLoss
+  num_sources: 2
+
+metrics:
+  device: auto
+  train:
+    - _target_: src.metrics.SISNRiMetric
+      device: ${metrics.device}
+      name: "SI-SNRi"
+  inference:
+    - _target_: src.metrics.SISNRiMetric
+      device: ${metrics.device}
+      name: "SI-SNRi"
+    - _target_: src.metrics.SDRiMetric
+      device: ${metrics.device}
+      name: "SDRi"
+    - _target_: src.metrics.PESQMetric
+      device: ${metrics.device}
+      name: "PESQ"
+    - _target_: src.metrics.STOIMetric
+      device: ${metrics.device}
+      name: "STOI"
+
+datasets:
+  train:
+    _target_: src.datasets.Dataset
+    data_dir: "dla_dataset"
+    instance_transforms: null
+    part: "train"
+  val:
+    _target_: src.datasets.Dataset
+    data_dir: "dla_dataset"
+    instance_transforms: null
+    limit: 310
+    part: "val"
+
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 4
+  num_workers: 2
+  pin_memory: true
+
+trainer:
+  device: cpu
+  device_tensors: ["mix", "source"]
+  early_stop: 20
+  epoch_len: 5000
+  grad_clip_norm: 5.0
+  log_step: 50
+  monitor: "max val_SI-SNRi"
+  n_epochs: 200
+  override: true
+  resume_from: null
+  save_dir: "saved"
+  save_period: 5
+  seed: 1
+  use_amp: false
+
+transforms:
+  batch_transforms:
+    inference: null
+    train: null
+  instance_transforms:
+    inference: null
+    train: null
+
+writer:
+  run_name: "rtfs_bigger"
+  mode: online
+
