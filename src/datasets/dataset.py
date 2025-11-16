@@ -40,7 +40,9 @@ class Dataset(BaseDataset):
             "mix_path": item["mix"],  # Add the mix file path
         }
 
-        result = self.preprocess_data(result)
+        if self.instance_transforms is not None:
+            result = self.instance_transforms(result)
+        
         return result
 
     def _create_index(self, part: str) -> List[Dict[str, str]]:
