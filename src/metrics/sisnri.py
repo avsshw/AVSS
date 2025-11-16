@@ -21,6 +21,7 @@ class SISNRiMetric(BaseMetric):
             SI-SNRi
         """
         batch_size, num_sources, _ = true_source.shape
+        self.pit_sisnr = self.pit_sisnr.to(est_source.device)
         est_sisnr = self.pit_sisnr(est_source, true_source)
         mixture_expanded = mixture.unsqueeze(1).expand(-1, num_sources, -1)
         mix_flat = mixture_expanded.reshape(-1, mixture.size(-1))

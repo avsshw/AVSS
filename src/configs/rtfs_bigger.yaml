@@ -7,23 +7,9 @@ defaults:
   - transforms: audio_separation
   - _self_
 
-model:
-  hidden_size: 64
-  hop_length: 128
-  n_fft: 512
-  num_blocks: 4
-  num_sources: 2
-  rnn_layers: 4
-  use_lrw_video_encoder: true
-  use_video: false
-  video_feature_dim: 512
-  video_flat_input_dim: null
-  video_pretrained_path: "lrw_resnet18_dctcn_video_boundary.pth"
-  win_length: 512
-
 optimizer:
   _target_: torch.optim.AdamW
-  lr: 1.0e-4
+  lr: 3e-4
   weight_decay: 0.01
 
 lr_scheduler:
@@ -41,7 +27,7 @@ loss_function:
   num_sources: 2
 
 metrics:
-  device: auto
+  device: cuda
   train:
     - _target_: src.metrics.SISNRiMetric
       device: ${metrics.device}
@@ -75,13 +61,13 @@ datasets:
 
 dataloader:
   _target_: torch.utils.data.DataLoader
-  batch_size: 4
+  batch_size: 2
   num_workers: 2
   pin_memory: true
 
 trainer:
-  device: cpu
-  device_tensors: ["mix", "source"]
+  device: auto
+  device_tensors: ["mix", "source", "video"]
   early_stop: 20
   epoch_len: 5000
   grad_clip_norm: 5.0
@@ -93,15 +79,7 @@ trainer:
   save_dir: "saved"
   save_period: 5
   seed: 1
-  use_amp: false
-
-transforms:
-  batch_transforms:
-    inference: null
-    train: null
-  instance_transforms:
-    inference: null
-    train: null
+  use_amp: true
 
 writer:
   run_name: "rtfs_bigger"

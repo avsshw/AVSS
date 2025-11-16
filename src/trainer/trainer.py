@@ -66,21 +66,25 @@ class Trainer(BaseTrainer):
                 batch["mixture"] = batch["mix"]
                 if has_source:
                     batch["true_source"] = batch["source"]
-                loss = batch["loss"] / accumulation_steps
-            scaler.scale(loss).backward()
-            if (
-                self.is_train
-                and batch_idx is not None
-                and (batch_idx + 1) % accumulation_steps == 0
-            ):
-                grad_norm = self._get_grad_norm()
-                self._clip_grad_norm()
-                scaler.step(self.optimizer)
-                scaler.update()
-                self.optimizer.zero_grad()
-                if self.lr_scheduler is not None:
-                    self.lr_scheduler.step()
-                batch["grad_norm"] = grad_norm
+                    loss = batch["loss"] / accumulation_steps
+                else:
+                    loss = None
+
+            if loss is not None:
+                scaler.scale(loss).backward()
+                if (
+                    self.is_train
+                    and batch_idx is not None
+                    and (batch_idx + 1) % accumulation_steps == 0
+                ):
+                    grad_norm = self._get_grad_norm()
+                    self._clip_grad_norm()
+                    scaler.step(self.optimizer)
+                    scaler.update()
+                    self.optimizer.zero_grad()
+                    if self.lr_scheduler is not None:
+                        self.lr_scheduler.step()
+                    batch["grad_norm"] = grad_norm
         else:
             video = batch.get("video", None)
             if video is not None:
@@ -98,8 +102,11 @@ class Trainer(BaseTrainer):
             batch["mixture"] = batch["mix"]
             if has_source:
                 batch["true_source"] = batch["source"]
-            loss = batch["loss"] / accumulation_steps
-            if self.is_train:
+                loss = batch["loss"] / accumulation_steps
+            else:
+                loss = None
+
+            if self.is_train and loss is not None:
                 loss.backward()
                 if batch_idx is not None and (batch_idx + 1) % accumulation_steps == 0:
                     grad_norm = self._get_grad_norm()
