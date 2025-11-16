@@ -62,6 +62,7 @@ class Trainer(BaseTrainer):
                         preds=outputs, targets=batch["source"], **batch
                     )
                     batch.update(all_losses)
+
             batch["est_source"] = outputs
             batch["mixture"] = batch["mix"]
             if has_source:
@@ -86,6 +87,7 @@ class Trainer(BaseTrainer):
                             self.lr_scheduler.step()
                     batch["grad_norm"] = grad_norm
         else:
+            # if for some reason AMP is not used
             video = batch.get("video", None)
             if video is not None:
                 outputs = self.model(batch["mix"], video=video)
@@ -111,7 +113,7 @@ class Trainer(BaseTrainer):
                         self.optimizer.step()
                         self.optimizer.zero_grad()
                         if self.lr_scheduler is not None:
-                            # Only step per-batch schedulers (not ReduceLROnPlateau)
+                            # for per batch schedulers (doesn't work for ReduceLROnPlateu)
                             import inspect
                             step_signature = inspect.signature(self.lr_scheduler.step)
                             if 'metrics' not in step_signature.parameters:
