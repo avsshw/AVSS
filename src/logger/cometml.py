@@ -101,9 +101,7 @@ class CometMLWriter:
             self.timer = datetime.now()
         else:
             duration = datetime.now() - self.timer
-            self.add_scalar(
-                "steps_per_sec", (self.step - previous_step) / duration.total_seconds()
-            )
+            self.add_scalar("steps_per_sec", (self.step - previous_step) / duration.total_seconds())
             self.timer = datetime.now()
 
     def _object_name(self, object_name):
@@ -132,9 +130,7 @@ class CometMLWriter:
         """
         # For comet, save dir is not required
         # It is kept for consistency with WandB
-        self.exp.log_model(
-            name="checkpoints", file_or_folder=checkpoint_path, overwrite=True
-        )
+        self.exp.log_model(name="checkpoints", file_or_folder=checkpoint_path, overwrite=True)
 
     def add_scalar(self, scalar_name, scalar):
         """
@@ -159,10 +155,7 @@ class CometMLWriter:
             scalars (dict): dict, containing scalar name and value.
         """
         self.exp.log_metrics(
-            {
-                self._object_name(scalar_name): scalar
-                for scalar_name, scalar in scalars.items()
-            },
+            {self._object_name(scalar_name): scalar for scalar_name, scalar in scalars.items()},
             step=self.step,
         )
 
@@ -175,9 +168,7 @@ class CometMLWriter:
             image (Path | Tensor | ndarray | list[tuple] | Image): image
                 in the CometML-friendly format.
         """
-        self.exp.log_image(
-            image_data=image, name=self._object_name(image_name), step=self.step
-        )
+        self.exp.log_image(image_data=image, name=self._object_name(image_name), step=self.step)
 
     def add_audio(self, audio_name, audio, sample_rate=None):
         """
@@ -204,9 +195,7 @@ class CometMLWriter:
             text_name (str): name of the text to use in the tracker.
             text (str): text content.
         """
-        self.exp.log_text(
-            text=text, step=self.step, metadata={"name": self._object_name(text_name)}
-        )
+        self.exp.log_text(text=text, step=self.step, metadata={"name": self._object_name(text_name)})
 
     def add_histogram(self, hist_name, values_for_hist, bins=None):
         """
@@ -227,9 +216,7 @@ class CometMLWriter:
         # if np_hist[0].shape[0] > 512:
         #     np_hist = np.histogram(values_for_hist, bins=512)
 
-        self.exp.log_histogram_3d(
-            values=values_for_hist, name=self._object_name(hist_name), step=self.step
-        )
+        self.exp.log_histogram_3d(values=values_for_hist, name=self._object_name(hist_name), step=self.step)
 
     def add_table(self, table_name, table: pd.DataFrame):
         """

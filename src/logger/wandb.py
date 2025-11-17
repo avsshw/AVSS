@@ -83,9 +83,7 @@ class WandBWriter:
             self.timer = datetime.now()
         else:
             duration = datetime.now() - self.timer
-            self.add_scalar(
-                "steps_per_sec", (self.step - previous_step) / duration.total_seconds()
-            )
+            self.add_scalar("steps_per_sec", (self.step - previous_step) / duration.total_seconds())
             self.timer = datetime.now()
 
     def _object_name(self, object_name):
@@ -137,10 +135,7 @@ class WandBWriter:
             scalars (dict): dict, containing scalar name and value.
         """
         self.wandb.log(
-            {
-                self._object_name(scalar_name): scalar
-                for scalar_name, scalar in scalars.items()
-            },
+            {self._object_name(scalar_name): scalar for scalar_name, scalar in scalars.items()},
             step=self.step,
         )
 
@@ -153,9 +148,7 @@ class WandBWriter:
             image (Path | ndarray | Image): image in the WandB-friendly
                 format.
         """
-        self.wandb.log(
-            {self._object_name(image_name): self.wandb.Image(image)}, step=self.step
-        )
+        self.wandb.log({self._object_name(image_name): self.wandb.Image(image)}, step=self.step)
 
     def add_audio(self, audio_name, audio, sample_rate=None):
         """
@@ -168,11 +161,7 @@ class WandBWriter:
         """
         audio = audio.detach().cpu().numpy().T
         self.wandb.log(
-            {
-                self._object_name(audio_name): self.wandb.Audio(
-                    audio, sample_rate=sample_rate
-                )
-            },
+            {self._object_name(audio_name): self.wandb.Audio(audio, sample_rate=sample_rate)},
             step=self.step,
         )
 
@@ -184,9 +173,7 @@ class WandBWriter:
             text_name (str): name of the text to use in the tracker.
             text (str): text content.
         """
-        self.wandb.log(
-            {self._object_name(text_name): self.wandb.Html(text)}, step=self.step
-        )
+        self.wandb.log({self._object_name(text_name): self.wandb.Html(text)}, step=self.step)
 
     def add_histogram(self, hist_name, values_for_hist, bins=None):
         """

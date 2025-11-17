@@ -38,6 +38,8 @@ def main(config):
     print(model)
 
     # get metrics
+    if config.metrics.device == "auto":
+        config.metrics.device = device
     metrics = instantiate(config.metrics)
 
     # save_path for model predictions

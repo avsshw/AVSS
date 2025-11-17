@@ -140,12 +140,8 @@ class TFInteraction(nn.Module):
 
     def __init__(self, embed_dim):
         super().__init__()
-        self.freq_conv = nn.Conv1d(
-            embed_dim, embed_dim, kernel_size=3, padding=1, groups=embed_dim
-        )
-        self.time_conv = nn.Conv1d(
-            embed_dim, embed_dim, kernel_size=3, padding=1, groups=embed_dim
-        )
+        self.freq_conv = nn.Conv1d(embed_dim, embed_dim, kernel_size=3, padding=1, groups=embed_dim)
+        self.time_conv = nn.Conv1d(embed_dim, embed_dim, kernel_size=3, padding=1, groups=embed_dim)
 
         self.layer_norm = nn.LayerNorm(embed_dim)
         self.ffn = nn.Sequential(
@@ -289,12 +285,7 @@ class RTFSNet(nn.Module):
         input_size = 2
 
         self.blocks = nn.ModuleList(
-            [
-                RTFSBlock(
-                    input_size if i == 0 else hidden_size, hidden_size, rnn_layers
-                )
-                for i in range(num_blocks)
-            ]
+            [RTFSBlock(input_size if i == 0 else hidden_size, hidden_size, rnn_layers) for i in range(num_blocks)]
         )
 
         self.mask_estimator = nn.Sequential(
@@ -343,22 +334,14 @@ class RTFSNet(nn.Module):
             t_v = video_features.shape[2]
             if t_v != time:
                 video_features = rearrange(video_features, "b s t d -> (b s) d t")
-                video_features = F.interpolate(
-                    video_features, size=time, mode="linear", align_corners=False
-                )
-                video_features = rearrange(
-                    video_features, "(b s) d t -> b s t d", s=self.num_sources
-                )
+                video_features = F.interpolate(video_features, size=time, mode="linear", align_corners=False)
+                video_features = rearrange(video_features, "(b s) d t -> b s t d", s=self.num_sources)
 
         x = spec
         for i, block in enumerate(self.blocks):
             x = block(x)
 
-            if (
-                self.use_video
-                and video_features is not None
-                and i == len(self.blocks) - 1
-            ):
+            if self.use_video and video_features is not None and i == len(self.blocks) - 1:
                 video_avg = video_features.mean(dim=1)
                 video_avg = video_avg.unsqueeze(1).expand(-1, freq, -1, -1)
 
@@ -370,14 +353,8 @@ class RTFSNet(nn.Module):
 
         spec_expanded = rearrange(spec, "b f t c -> b f t 1 c")
 
-        real_part = (
-            spec_expanded[..., 0] * masks[..., 0]
-            - spec_expanded[..., 1] * masks[..., 1]
-        )
-        imag_part = (
-            spec_expanded[..., 0] * masks[..., 1]
-            + spec_expanded[..., 1] * masks[..., 0]
-        )
+        real_part = spec_expanded[..., 0] * masks[..., 0] - spec_expanded[..., 1] * masks[..., 1]
+        imag_part = spec_expanded[..., 0] * masks[..., 1] + spec_expanded[..., 1] * masks[..., 0]
 
         masked_specs = torch.stack([real_part, imag_part], dim=-1)
 

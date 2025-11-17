@@ -1,13 +1,13 @@
 defaults:
-  - model: baseline
-  - metrics: example
-  - datasets: example_eval # we do not want to run inference on training data
+  - model: rtfsnet
+  - metrics: base
+  - datasets: custom_dir
   - dataloader: example
-  - transforms: example
+  - transforms: audio_separation
   - _self_
 inferencer:
-  device_tensors: ["data_object", "labels"] # which tensors should be on device (ex. GPU)
-  device: auto # device name or "auto"
-  save_path: "example" # any name here, can be a dataset name
+  device_tensors: ["mix", "source", "video"]
+  device: auto
+  save_path: "inference_custom_dir"
   seed: 1
-  from_pretrained: "saved/model_best.pth" # path to the pretrained model
+  from_pretrained: "saved/testing/model_best.pth"

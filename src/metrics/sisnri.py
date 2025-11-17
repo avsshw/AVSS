@@ -7,9 +7,10 @@ from src.metrics.base_metric import BaseMetric
 class SISNRiMetric(BaseMetric):
     def __init__(self, device="cpu", name=None):
         super().__init__(name=name)
+        self.device = device
         self.pit_sisnr = PermutationInvariantTraining(
             scale_invariant_signal_noise_ratio, mode="speaker-wise", eval_func="max"
-        )
+        ).to(device)
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """

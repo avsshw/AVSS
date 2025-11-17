@@ -50,9 +50,9 @@ class Inferencer(BaseTrainer):
                 the model desirable weights are defined outside of the
                 Inferencer Class.
         """
-        assert (
-            skip_model_load or config.inferencer.get("from_pretrained") is not None
-        ), "Provide checkpoint or set skip_model_load=True"
+        assert skip_model_load or config.inferencer.get("from_pretrained") is not None, (
+            "Provide checkpoint or set skip_model_load=True"
+        )
 
         self.config = config
         self.cfg_trainer = self.config.inferencer
@@ -97,9 +97,7 @@ class Inferencer(BaseTrainer):
             part_logs[part] = logs
         return part_logs
 
-    def process_batch(
-        self, batch_idx, batch, metrics, part, accumulation_steps=1, scaler=None
-    ):
+    def process_batch(self, batch_idx, batch, metrics, part, accumulation_steps=1, scaler=None):
         """
         Run batch through the model, compute metrics, and
         save predictions to disk.
@@ -154,9 +152,7 @@ class Inferencer(BaseTrainer):
                     separated_audio = batch["logits"][i, src_idx].cpu()
                     output_filename = f"{mix_name}_s{src_idx + 1}.wav"
                     output_path = self.save_path / part / output_filename
-                    torchaudio.save(
-                        output_path, separated_audio.unsqueeze(0), sample_rate=16000
-                    )
+                    torchaudio.save(output_path, separated_audio.unsqueeze(0), sample_rate=16000)
 
         return batch
 

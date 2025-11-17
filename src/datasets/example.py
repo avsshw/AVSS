@@ -14,9 +14,7 @@ class ExampleDataset(BaseDataset):
     0 and n_classes-1 as labels.
     """
 
-    def __init__(
-        self, input_length, n_classes, dataset_length, name="train", *args, **kwargs
-    ):
+    def __init__(self, input_length, n_classes, dataset_length, name="train", *args, **kwargs):
         """
         Args:
             input_length (int): length of the random vector.

@@ -1,6 +1,5 @@
 import logging
 import random
-from typing import List
 
 import torch
 from torch.utils.data import Dataset
@@ -17,9 +16,7 @@ class BaseDataset(Dataset):
     several datasets, the user only have to define index in a nested class.
     """
 
-    def __init__(
-        self, index, limit=None, shuffle_index=False, instance_transforms=None
-    ):
+    def __init__(self, index, limit=None, shuffle_index=False, instance_transforms=None):
         """
         Args:
             index (list[dict]): list, containing dict for each element of
@@ -36,7 +33,7 @@ class BaseDataset(Dataset):
         self._assert_index_is_valid(index)
 
         index = self._shuffle_and_limit_index(index, limit, shuffle_index)
-        self._index: List[dict] = index
+        self._index: list[dict] = index
 
         self.instance_transforms = instance_transforms
 
@@ -99,9 +96,7 @@ class BaseDataset(Dataset):
         """
         if self.instance_transforms is not None:
             for transform_name in self.instance_transforms.keys():
-                instance_data[transform_name] = self.instance_transforms[
-                    transform_name
-                ](instance_data[transform_name])
+                instance_data[transform_name] = self.instance_transforms[transform_name](instance_data[transform_name])
         return instance_data
 
     @staticmethod
@@ -139,25 +134,11 @@ class BaseDataset(Dataset):
                 such as label and object path.
         """
         for entry in index:
-            assert "mix" in entry, (
-                "Each dataset item should include field 'mix' - path to audio file."
-            )
-            assert "label_1" in entry, (
-                "Each dataset item should include field 'label_1'"
-                " - path to label 1 file."
-            )
-            assert "label_2" in entry, (
-                "Each dataset item should include field 'label_2'"
-                " - path to label 2 file."
-            )
-            assert "mouths_1" in entry, (
-                "Each dataset item should include field 'mouths_1'"
-                " - path to mouths 1 file."
-            )
-            assert "mouths_2" in entry, (
-                "Each dataset item should include field 'mouths_2'"
-                " - path to mouths 2 file."
-            )
+            assert "mix" in entry, "Each dataset item should include field 'mix' - path to audio file."
+            assert "label_1" in entry, "Each dataset item should include field 'label_1' - path to label 1 file."
+            assert "label_2" in entry, "Each dataset item should include field 'label_2' - path to label 2 file."
+            assert "mouths_1" in entry, "Each dataset item should include field 'mouths_1' - path to mouths 1 file."
+            assert "mouths_2" in entry, "Each dataset item should include field 'mouths_2' - path to mouths 2 file."
 
     @staticmethod
     def _sort_index(index):

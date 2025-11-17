@@ -1,0 +1,6 @@
+test:
+  _target_: src.datasets.CustomDirDataset
+  data_dir: "dla_dataset"
+  instance_transforms: null
+
+

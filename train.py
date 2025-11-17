@@ -44,6 +44,9 @@ def main(config):
 
     # get function handles of loss and metrics
     loss_function = instantiate(config.loss_function).to(device)
+    
+    if config.metrics.device == "auto":
+        OmegaConf.update(config, "metrics.device", device)
     metrics = instantiate(config.metrics)
 
     # build optimizer, learning rate scheduler

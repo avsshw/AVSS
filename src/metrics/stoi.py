@@ -11,10 +11,9 @@ class STOIMetric(BaseMetric):
 
     def __init__(self, device="cpu", name=None):
         super().__init__(name=name)
+        self.device = device
         stoi_base = ShortTimeObjectiveIntelligibility(fs=16000)
-        self.metric = PermutationInvariantTraining(
-            stoi_base, mode="speaker-wise", eval_func="max"
-        )
+        self.metric = PermutationInvariantTraining(stoi_base, mode="speaker-wise", eval_func="max").to(device)
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """
@@ -25,6 +24,5 @@ class STOIMetric(BaseMetric):
         Returns:
             stoi: STOI score averaged over batch and sources (with PIT)
         """
-        self.metric = self.metric.to(est_source.device)
         score = self.metric(est_source, true_source)
         return score.item()
