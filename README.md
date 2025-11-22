@@ -41,7 +41,7 @@ To run inference on the example dataset:
 sh scripts/download_inference_data.sh
 
 # Download pretrained model
-gdown https://drive.google.com/uc?id=1t7FFsG3hPcgUYuitekSMpggYLvzV6SXW
+gdown https://drive.google.com/uc?id=1l72LuBr_CQxaut6WUbyyPFJIRIbH8-68
 unzip rtfs.zip
 
 # Run inference
