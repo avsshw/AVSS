@@ -62,26 +62,32 @@ class Trainer(BaseTrainer):
                         preds=outputs, targets=batch["source"], **batch
                     )
                     batch.update(all_losses)
-                batch["est_source"] = outputs
-                batch["mixture"] = batch["mix"]
-                if has_source:
-                    batch["true_source"] = batch["source"]
+
+            batch["est_source"] = outputs
+            batch["mixture"] = batch["mix"]
+            if has_source:
+                batch["true_source"] = batch["source"]
                 loss = batch["loss"] / accumulation_steps
-            scaler.scale(loss).backward()
-            if (
-                self.is_train
-                and batch_idx is not None
-                and (batch_idx + 1) % accumulation_steps == 0
-            ):
-                grad_norm = self._get_grad_norm()
-                self._clip_grad_norm()
-                scaler.step(self.optimizer)
-                scaler.update()
-                self.optimizer.zero_grad()
-                if self.lr_scheduler is not None:
-                    self.lr_scheduler.step()
-                batch["grad_norm"] = grad_norm
+                scaler.scale(loss).backward()
+                if (
+                    self.is_train
+                    and batch_idx is not None
+                    and (batch_idx + 1) % accumulation_steps == 0
+                ):
+                    grad_norm = self._get_grad_norm()
+                    self._clip_grad_norm()
+                    scaler.step(self.optimizer)
+                    scaler.update()
+                    self.optimizer.zero_grad()
+                    if self.lr_scheduler is not None:
+                        # for per batch schedulers (doesn't work for ReduceLROnPlateu)
+                        import inspect
+                        step_signature = inspect.signature(self.lr_scheduler.step)
+                        if 'metrics' not in step_signature.parameters:
+                            self.lr_scheduler.step()
+                    batch["grad_norm"] = grad_norm
         else:
+            # if for some reason AMP is not used
             video = batch.get("video", None)
             if video is not None:
                 outputs = self.model(batch["mix"], video=video)
@@ -98,17 +104,21 @@ class Trainer(BaseTrainer):
             batch["mixture"] = batch["mix"]
             if has_source:
                 batch["true_source"] = batch["source"]
-            loss = batch["loss"] / accumulation_steps
-            if self.is_train:
-                loss.backward()
-                if batch_idx is not None and (batch_idx + 1) % accumulation_steps == 0:
-                    grad_norm = self._get_grad_norm()
-                    self._clip_grad_norm()
-                    self.optimizer.step()
-                    self.optimizer.zero_grad()
-                    if self.lr_scheduler is not None:
-                        self.lr_scheduler.step()
-                    batch["grad_norm"] = grad_norm
+                loss = batch["loss"] / accumulation_steps
+                if self.is_train:
+                    loss.backward()
+                    if batch_idx is not None and (batch_idx + 1) % accumulation_steps == 0:
+                        grad_norm = self._get_grad_norm()
+                        self._clip_grad_norm()
+                        self.optimizer.step()
+                        self.optimizer.zero_grad()
+                        if self.lr_scheduler is not None:
+                            # for per batch schedulers (doesn't work for ReduceLROnPlateu)
+                            import inspect
+                            step_signature = inspect.signature(self.lr_scheduler.step)
+                            if 'metrics' not in step_signature.parameters:
+                                self.lr_scheduler.step()
+                        batch["grad_norm"] = grad_norm
 
         # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:

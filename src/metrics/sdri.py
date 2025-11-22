@@ -11,9 +11,10 @@ class SDRiMetric(BaseMetric):
 
     def __init__(self, device="cpu", name=None):
         super().__init__(name=name)
+        self.device = device
         self.pit_sdri = PermutationInvariantTraining(
             signal_distortion_ratio, mode="speaker-wise", eval_func="max"
-        )
+        ).to(device)
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """

@@ -230,9 +230,13 @@ class BaseTrainer:
                         epoch, self._progress(batch_idx), batch["loss"].item()
                     )
                 )
-                self.writer.add_scalar(
-                    "learning rate", self.lr_scheduler.get_last_lr()[0]
-                )
+
+                try:
+                    lr = self.lr_scheduler.get_last_lr()[0]
+                except (AttributeError, KeyError):
+                    #check for ReduceLRonPlateu: since it doesn't have get_last_lr attribute, take from optimizer
+                    lr = self.optimizer.param_groups[0]['lr']
+                self.writer.add_scalar("learning rate", lr)
                 self._log_scalars(self.train_metrics)
                 self._log_batch(batch_idx, batch)
                 # we don't want to reset train metrics at the start of every epoch
@@ -248,6 +252,14 @@ class BaseTrainer:
         for part, dataloader in self.evaluation_dataloaders.items():
             val_logs = self._evaluation_epoch(epoch, part, dataloader)
             logs.update(**{f"{part}_{name}": value for name, value in val_logs.items()})
+
+        #Check for ReduceLROnPlateu seince it asks for the metrics specifically after the batch.
+        if self.lr_scheduler is not None and hasattr(self.lr_scheduler, 'step'):
+            import inspect
+            step_signature = inspect.signature(self.lr_scheduler.step)
+            if 'metrics' in step_signature.parameters:
+                if self.mnt_mode != "off" and self.mnt_metric in logs:
+                    self.lr_scheduler.step(logs[self.mnt_metric])
 
         return logs
 
