@@ -13,9 +13,7 @@ class STOIMetric(BaseMetric):
         super().__init__(name=name)
         self.device = device
         stoi_base = ShortTimeObjectiveIntelligibility(fs=16000)
-        self.metric = PermutationInvariantTraining(
-            stoi_base, mode="speaker-wise", eval_func="max"
-        ).to(device)
+        self.metric = PermutationInvariantTraining(stoi_base, mode="speaker-wise", eval_func="max").to(device)
 
     def __call__(self, est_source, true_source, mixture, **kwargs):
         """

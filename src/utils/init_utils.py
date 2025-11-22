@@ -120,9 +120,7 @@ def saving_init(save_dir, config):
             print(f"Overriding save directory '{save_dir}'...")
             shutil.rmtree(str(save_dir))
         elif not config.trainer.override:
-            raise ValueError(
-                "Save directory exists. Change the name or set override=True"
-            )
+            raise ValueError("Save directory exists. Change the name or set override=True")
 
     save_dir.mkdir(exist_ok=True, parents=True)
 

@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from typing import Optional
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -82,7 +81,7 @@ class VideoEncoderLRW(nn.Module):
     Loads weights greedily from LRW video checkpoints and freezes loaded params.
     """
 
-    def __init__(self, pretrained_path: Optional[str] = None, freeze_backbone: bool = True, in_channels: int = 1):
+    def __init__(self, pretrained_path: str | None = None, freeze_backbone: bool = True, in_channels: int = 1):
         super().__init__()
         self.backbone = ResNet18Backbone(in_channels=in_channels)
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
@@ -126,9 +125,7 @@ class VideoEncoderLRW(nn.Module):
         """
         b, s, t, h, w = video.shape
         x = video.view(b * s * t, 1, h, w)
-        x = self.backbone(x)               # (b*s*t, 512, h', w')
+        x = self.backbone(x)  # (b*s*t, 512, h', w')
         x = self.pool(x).view(b * s * t, 512)
         x = x.view(b, s, t, 512)
         return x
-
-

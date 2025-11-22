@@ -1,0 +1,64 @@
+defaults:
+  - model: rtfsnet
+  - writer: cometml
+  - metrics: base
+  - datasets: dataset  
+  - dataloader: example
+  - transforms: audio_separation
+  - _self_
+
+datasets:
+  val: 
+    limit: 310
+
+dataloader:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 1
+  num_workers: 4
+  pin_memory: True
+
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 3e-4  
+  weight_decay: 0.01  
+  betas: [0.9, 0.999]
+
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  mode: max
+  factor: 0.5 
+  patience: 10  
+  min_lr: 1e-6  
+  threshold: 0.001  
+
+metrics:
+  device: cpu
+  train:
+    - _target_: src.metrics.SISNRiMetric
+      device: ${metrics.device}
+      name: "SI-SNRi"
+
+
+loss_function:
+  _target_: src.loss.sisnr.SISNRLoss
+  num_sources: 2
+  mode: "speaker-wise"
+  eval_func: "max"
+
+trainer:
+  log_step: 50
+  n_epochs: 200
+  epoch_len: 2500
+  device_tensors: ["mix", "source", "video"]
+  resume_from: null
+  device: auto
+  override: True
+  monitor: "max val_SI-SNRi"
+  save_period: 10
+  early_stop: 30
+  save_dir: "saved"
+  seed: 1
+  grad_clip_norm: 5.0
+  use_amp: True
+  accumulation_steps: 4  

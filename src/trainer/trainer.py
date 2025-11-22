@@ -58,9 +58,7 @@ class Trainer(BaseTrainer):
                     outputs = self.model(batch["mix"])
                 batch["output"] = outputs
                 if has_source:
-                    all_losses = self.criterion(
-                        preds=outputs, targets=batch["source"], **batch
-                    )
+                    all_losses = self.criterion(preds=outputs, targets=batch["source"], **batch)
                     batch.update(all_losses)
 
             batch["est_source"] = outputs
@@ -69,11 +67,7 @@ class Trainer(BaseTrainer):
                 batch["true_source"] = batch["source"]
                 loss = batch["loss"] / accumulation_steps
                 scaler.scale(loss).backward()
-                if (
-                    self.is_train
-                    and batch_idx is not None
-                    and (batch_idx + 1) % accumulation_steps == 0
-                ):
+                if self.is_train and batch_idx is not None and (batch_idx + 1) % accumulation_steps == 0:
                     grad_norm = self._get_grad_norm()
                     self._clip_grad_norm()
                     scaler.step(self.optimizer)
@@ -82,8 +76,9 @@ class Trainer(BaseTrainer):
                     if self.lr_scheduler is not None:
                         # for per batch schedulers (doesn't work for ReduceLROnPlateu)
                         import inspect
+
                         step_signature = inspect.signature(self.lr_scheduler.step)
-                        if 'metrics' not in step_signature.parameters:
+                        if "metrics" not in step_signature.parameters:
                             self.lr_scheduler.step()
                     batch["grad_norm"] = grad_norm
         else:
@@ -95,9 +90,7 @@ class Trainer(BaseTrainer):
                 outputs = self.model(batch["mix"])
             batch["output"] = outputs
             if has_source:
-                all_losses = self.criterion(
-                    preds=outputs, targets=batch["source"], **batch
-                )
+                all_losses = self.criterion(preds=outputs, targets=batch["source"], **batch)
                 batch.update(all_losses)
 
             batch["est_source"] = outputs
@@ -115,8 +108,9 @@ class Trainer(BaseTrainer):
                         if self.lr_scheduler is not None:
                             # for per batch schedulers (doesn't work for ReduceLROnPlateu)
                             import inspect
+
                             step_signature = inspect.signature(self.lr_scheduler.step)
-                            if 'metrics' not in step_signature.parameters:
+                            if "metrics" not in step_signature.parameters:
                                 self.lr_scheduler.step()
                         batch["grad_norm"] = grad_norm
 
@@ -143,16 +137,8 @@ class Trainer(BaseTrainer):
         """
         sample_rate = 16000
         self.writer.add_audio("mix", batch["mix"][0], sample_rate=sample_rate)
-        self.writer.add_audio(
-            "pred_source_1", batch["output"][0, 0], sample_rate=sample_rate
-        )
-        self.writer.add_audio(
-            "pred_source_2", batch["output"][0, 1], sample_rate=sample_rate
-        )
+        self.writer.add_audio("pred_source_1", batch["output"][0, 0], sample_rate=sample_rate)
+        self.writer.add_audio("pred_source_2", batch["output"][0, 1], sample_rate=sample_rate)
         if "source" in batch:
-            self.writer.add_audio(
-                "true_source_1", batch["source"][0, 0], sample_rate=sample_rate
-            )
-            self.writer.add_audio(
-                "true_source_2", batch["source"][0, 1], sample_rate=sample_rate
-            )
+            self.writer.add_audio("true_source_1", batch["source"][0, 0], sample_rate=sample_rate)
+            self.writer.add_audio("true_source_2", batch["source"][0, 1], sample_rate=sample_rate)

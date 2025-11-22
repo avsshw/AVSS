@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Dict, List
 
 import numpy as np
 import torch
@@ -42,10 +41,10 @@ class Dataset(BaseDataset):
 
         if self.instance_transforms is not None:
             result = self.instance_transforms(result)
-        
+
         return result
 
-    def _create_index(self, part: str) -> List[Dict[str, str]]:
+    def _create_index(self, part: str) -> list[dict[str, str]]:
         index = []
         audio_dir = self._data_dir / "audio" / part
         mouths_dir = self._data_dir / "mouths"

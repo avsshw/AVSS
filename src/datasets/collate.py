@@ -33,12 +33,10 @@ def collate_fn(dataset_items: list[dict], use_video=False, use_sources=True):
             sources[i, 1] = item["label_2"]
         batch["source"] = sources
 
-    has_video = dataset_items[0].get("mouths_1") is not None
+    has_video = all(item.get("mouths_1") is not None and item.get("mouths_2") is not None for item in dataset_items)
     if has_video:
         sample_video = dataset_items[0]["mouths_1"]
-        videos = torch.zeros(
-            (len(dataset_items), 2, *sample_video.shape), dtype=sample_video.dtype
-        )
+        videos = torch.zeros((len(dataset_items), 2, *sample_video.shape), dtype=sample_video.dtype)
         for i, item in enumerate(dataset_items):
             videos[i, 0] = item["mouths_1"]
             videos[i, 1] = item["mouths_2"]
