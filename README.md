@@ -5,6 +5,7 @@
 - [About](#about)
 - [Installation](#installation)
 - [Inference](#inference)
+- [Evaluation](#evaluation)
 - [Demo](#demo)
 - [Useful Links](#useful)
 - [Credits](#credits)
@@ -13,7 +14,7 @@
 
 ## About
 
-"This repository contains a course project implementing **Audio-Visual Source Separation** using the [**RTFS-Net**](https://arxiv.org/pdf/2309.17189) architecture, developed as homework for the [**Deep Learning in Audio & Speech**](https://github.com/markovka17/dla/tree/2025/project_avss)
+This repository contains a course project implementing **Audio-Visual Source Separation** using the [**RTFS-Net**](https://arxiv.org/pdf/2309.17189) architecture, developed as homework for the [**Deep Learning in Audio & Speech**](https://github.com/markovka17/dla/tree/2025/project_avss) course.
 
 
 ## Installation
