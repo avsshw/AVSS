@@ -5,7 +5,7 @@ train:
   instance_transforms:
     _target_: src.transforms.audio_augment.InstanceTransforms
     is_train: true
-    target_length: 48000  
+    target_length: 48000
 val:
   _target_: src.datasets.Dataset
   part: "val"
@@ -14,8 +14,3 @@ val:
     _target_: src.transforms.audio_augment.InstanceTransforms
     is_train: false
     target_length: 48000
-test:
-  _target_: src.datasets.Dataset
-  part: "test"
-  data_dir: "dla_dataset"
-  instance_transforms: null

@@ -2,11 +2,11 @@ _target_: src.model.RTFSNet
 n_fft: 512
 hop_length: 128
 win_length: 512
-num_blocks: 3
-hidden_size: 64  
-rnn_layers: 2  
+num_blocks: 4
+hidden_size: 64
+rnn_layers: 2
 num_sources: 2
-use_video: true
+use_video: false
 video_feature_dim: 512
 video_flat_input_dim: null
 video_pretrained_path: "lrw_resnet18_dctcn_video_boundary.pth"
