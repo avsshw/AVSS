@@ -27,6 +27,7 @@ class Inferencer(BaseTrainer):
         metrics=None,
         batch_transforms=None,
         skip_model_load=False,
+        speaker_folder_names=None,
     ):
         """
         Initialize the Inferencer.
@@ -49,6 +50,9 @@ class Inferencer(BaseTrainer):
                 pre-trained checkpoint path. Set this argument to True if
                 the model desirable weights are defined outside of the
                 Inferencer Class.
+            speaker_folder_names (list[str] | None): list of custom folder names
+                for each speaker. If None, defaults to "speaker_1", "speaker_2", etc.
+                The length should match the number of sources in the model.
         """
         assert skip_model_load or config.inferencer.get("from_pretrained") is not None, (
             "Provide checkpoint or set skip_model_load=True"
@@ -61,6 +65,16 @@ class Inferencer(BaseTrainer):
 
         self.model = model
         self.batch_transforms = batch_transforms
+
+        num_sources = getattr(self.model, 'num_sources', 2)
+        if speaker_folder_names is not None:
+            self.speaker_folder_names = speaker_folder_names
+        else:
+            config_speaker_names = config.inferencer.get("speaker_folder_names", None)
+            if config_speaker_names is not None:
+                self.speaker_folder_names = config_speaker_names
+            else:
+                self.speaker_folder_names = [f"speaker_{i + 1}" for i in range(num_sources)]
 
         # define dataloaders
         self.evaluation_dataloaders = {k: v for k, v in dataloaders.items()}
@@ -150,9 +164,12 @@ class Inferencer(BaseTrainer):
                     mix_name = mix_path.stem  #
                 for src_idx in range(num_sources):
                     separated_audio = batch["logits"][i, src_idx].cpu()
-                    output_filename = f"{mix_name}_s{src_idx + 1}.wav"
-                    output_path = self.save_path / part / output_filename
-                    torchaudio.save(output_path, separated_audio.unsqueeze(0), sample_rate=16000)
+                    speaker_name = self.speaker_folder_names[src_idx]
+                    speaker_dir = self.save_path / part / speaker_name
+                    speaker_dir.mkdir(exist_ok=True, parents=True)
+                    output_filename = f"{mix_name}.wav"
+                    output_path = speaker_dir / output_filename
+                    torchaudio.save(output_path, separated_audio.unsqueeze(0))
 
         return batch
 
@@ -175,6 +192,9 @@ class Inferencer(BaseTrainer):
         # create Save dir
         if self.save_path is not None:
             (self.save_path / part).mkdir(exist_ok=True, parents=True)
+            for speaker_name in self.speaker_folder_names:
+                speaker_dir = self.save_path / part / speaker_name
+                speaker_dir.mkdir(exist_ok=True, parents=True)
 
         with torch.no_grad():
             for batch_idx, batch in tqdm(

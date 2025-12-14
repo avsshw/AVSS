@@ -11,3 +11,4 @@ inferencer:
   save_path: "inference_custom_dir"
   seed: 1
   from_pretrained: "saved/testing/model_best.pth"
+  # speaker_folder_names: ["speaker_s1", "speaker_s2"]
